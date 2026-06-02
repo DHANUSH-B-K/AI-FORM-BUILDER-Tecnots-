@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Form Builder & Document Autofill</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;min-height:100vh;padding:2rem 1rem;color:#1a1a1a}
+.app{max-width:720px;margin:0 auto}
+h1{font-size:22px;font-weight:700;margin-bottom:0.25rem}
+.subtitle{font-size:14px;color:#666;margin-bottom:1.5rem}
+.stepper{display:flex;align-items:center;margin-bottom:1rem}
+.step-item{display:flex;align-items:center;gap:6px;cursor:pointer;flex:1}
+.step-circle{width:28px;height:28px;border-radius:50%;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#fff;color:#888;flex-shrink:0;transition:all 0.2s}
+.step-circle.active{background:#4285F4;border-color:#4285F4;color:#fff}
+.step-circle.done{background:#34A853;border-color:#34A853;color:#fff}
+.step-label{font-size:12px;color:#888;white-space:nowrap}
+.step-label.active{color:#1a1a1a;font-weight:700}
+.step-line{flex:1;height:1px;background:#ddd;margin:0 6px}
+.progress-bar{height:4px;background:#e5e5e5;border-radius:2px;margin-bottom:1.5rem;overflow:hidden}
+.progress-fill{height:100%;background:#4285F4;border-radius:2px;transition:width 0.3s}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.5rem;margin-bottom:1rem}
+.section-title{font-size:16px;font-weight:700;margin-bottom:0.5rem;display:flex;align-items:center;gap:6px}
+.section-desc{font-size:13px;color:#666;margin-bottom:1.25rem}
+.field-card{background:#f9f9f6;border:1px solid #e5e5e5;border-radius:8px;padding:1rem;margin-bottom:0.75rem}
+.field-grid{display:grid;grid-template-columns:1fr 1fr 130px 40px;gap:8px;align-items:end}
+.lbl{font-size:12px;color:#666;margin-bottom:4px;font-weight:600}
+input,select,textarea{width:100%;padding:7px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;transition:border-color 0.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#4285F4;box-shadow:0 0 0 3px rgba(66,133,244,0.1)}
+textarea{resize:vertical;min-height:70px}
+.btn{padding:8px 16px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-weight:600;transition:all 0.15s}
+.btn:hover{background:#f5f5f0;border-color:#bbb}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:#4285F4;border-color:#4285F4;color:#fff}
+.btn-primary:hover{background:#3367D6;border-color:#3367D6}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.btn-danger{color:#D85A30;border-color:#f0c4b4}
+.btn-danger:hover{background:#fff5f0;border-color:#D85A30}
+.btn-sm{padding:5px 10px;font-size:12px}
+.toggle-wrap{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:#444;padding:7px 0}
+.toggle-wrap input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#4285F4}
+.badge{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+.badge-warn{background:#fef3e2;color:#854F0B}
+.badge-ok{background:#eaf3de;color:#3B6D11}
+.dropzone{border:2px dashed #ccc;border-radius:12px;padding:3rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;background:#f9f9f6}
+.dropzone:hover,.dropzone.drag{border-color:#4285F4;background:#EEF4FF}
+.dropzone-icon{font-size:40px;color:#4285F4;margin-bottom:0.75rem}
+.dropzone-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.dropzone-sub{font-size:13px;color:#888}
+.file-preview{display:flex;align-items:center;gap:12px;background:#f9f9f6;border:1px solid #e5e5e5;border-radius:8px;padding:0.875rem}
+.file-icon{width:40px;height:40px;background:#EEF4FF;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#4285F4;font-size:20px;flex-shrink:0}
+.preview-box{background:#f9f9f6;border:1px solid #e5e5e5;border-radius:8px;padding:1rem;margin-top:1rem}
+.form-field-wrap{margin-bottom:1rem}
+.form-label{font-size:13px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.required-star{color:#D85A30}
+.missing-note{font-size:11px;color:#854F0B;margin-top:4px;display:flex;align-items:center;gap:4px}
+.err-note{font-size:11px;color:#A32D2D;margin-top:4px}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+.stat-box{background:#f9f9f6;border-radius:8px;padding:0.875rem;text-align:center;border:1px solid #eee}
+.stat-num{font-size:24px;font-weight:700}
+.stat-lbl{font-size:12px;color:#666;margin-top:2px}
+.ai-loading{text-align:center;padding:4rem 1rem}
+.spinner{display:inline-block;width:44px;height:44px;border:3px solid #e5e5e5;border-top-color:#4285F4;border-radius:50%;animation:spin 0.75s linear infinite;margin-bottom:1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.saved-banner{background:#eaf3de;border:1px solid #97C459;border-radius:10px;padding:1.5rem;text-align:center;margin-bottom:1.25rem}
+.json-box{background:#1e1e2e;border-radius:8px;padding:1rem;font-family:monospace;font-size:12px;white-space:pre-wrap;overflow:auto;max-height:320px;color:#cdd6f4;line-height:1.6}
+.error-box{background:#fff0f0;border:1px solid #f09595;border-radius:8px;padding:0.875rem;font-size:13px;color:#A32D2D;margin-bottom:1rem}
+.val-error-box{background:#fff0f0;border:1px solid #f09595;border-radius:8px;padding:0.875rem;font-size:13px;color:#A32D2D;margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.opts-list{margin-top:0.75rem}
+.opt-row{display:flex;gap:6px;margin-bottom:5px;align-items:center}
+.actions-row{display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1px solid #eee;margin-top:1.25rem}
+.actions-right{display:flex;gap:8px}
+.api-key-box{background:#EEF4FF;border:1px solid #4285F4;border-radius:10px;padding:1rem;margin-bottom:1.5rem;font-size:13px}
+.api-key-box a{color:#4285F4;font-weight:700}
+.api-key-row{display:flex;gap:8px;margin-top:0.75rem;align-items:center}
+.api-key-row input{flex:1}
+.key-saved{font-size:12px;color:#3B6D11;font-weight:600;display:none;align-items:center;gap:4px}
+</style>
+</head>
+<body>
+
+<div class="app" id="root"></div>
+
+<script>
+// Gemini API config
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+
+let geminiKey = localStorage.getItem("gemini_api_key") || "";
+
+let state = {
+  step: 1,
+  fields: [
+    {id:"f1",label:"Full Name",      type:"text",    required:true, options:[]},
+    {id:"f2",label:"Email Address",  type:"text",    required:true, options:[]},
+    {id:"f3",label:"Phone Number",   type:"text",    required:false,options:[]},
+    {id:"f4",label:"Message",        type:"textarea",required:false,options:[]}
+  ],
+  uploadedFile:null, docBase64:null, docMimeType:null, docName:null,
+  extractedValues:{}, formValues:{},
+  isExtracting:false, extractError:null,
+  saved:false, validationErrors:{}
+};
+let nextId = 20;
+function uid(){ return "f"+(nextId++); }
+function setState(patch){ Object.assign(state,patch); render(); }
+
+/* ── RENDER ── */
+function render(){
+  const root = document.getElementById("root");
+  root.innerHTML = "";
+  root.appendChild(buildHeader());
+  root.appendChild(buildStepper());
+  root.appendChild(buildProgressBar());
+  if(state.step===1) root.appendChild(buildStep1());
+  else if(state.step===2) root.appendChild(buildStep2());
+  else if(state.step===3) root.appendChild(buildStep3());
+  else if(state.step===4) root.appendChild(buildStep4());
+}
+
+function buildHeader(){
+  const d=document.createElement("div");
+  d.innerHTML=`<h1>✨ AI Form Builder</h1><p class="subtitle">Powered by Gemini 2.5 Flash (Free) — Build form → Upload doc → AI autofills it</p>`;
+  return d;
+}
+
+/* ── STEPPER ── */
+function buildStepper(){
+  const steps=[{n:1,label:"Build Form"},{n:2,label:"Upload Doc"},{n:3,label:"AI Extract"},{n:4,label:"Review & Save"}];
+  const wrap=document.createElement("div"); wrap.className="stepper";
+  steps.forEach((s,i)=>{
+    const item=document.createElement("div"); item.className="step-item";
+    if(s.n<state.step) item.onclick=()=>goStep(s.n);
+    const cls=state.step===s.n?"active":state.step>s.n?"done":"";
+    const icon=state.step>s.n?`<i class="ti ti-check"></i>`:s.n;
+    item.innerHTML=`<div class="step-circle ${cls}">${icon}</div><span class="step-label ${cls}">${s.label}</span>`;
+    wrap.appendChild(item);
+    if(i<3){const l=document.createElement("div");l.className="step-line";wrap.appendChild(l);}
+  });
+  return wrap;
+}
+
+function buildProgressBar(){
+  const d=document.createElement("div"); d.className="progress-bar";
+  d.innerHTML=`<div class="progress-fill" style="width:${((state.step-1)/3)*100}%"></div>`;
+  return d;
+}
+
+function goStep(n){ if(n<=state.step) setState({step:n}); }
+
+/* ── API KEY BOX ── */
+function buildApiKeyBox(){
+  const div=document.createElement("div"); div.className="api-key-box";
+  div.innerHTML=`
+    <strong><i class="ti ti-key"></i> Google Gemini API Key</strong> — Free to get!<br>
+    Get yours at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> (no credit card needed)
+    <div class="api-key-row">
+      <input type="password" id="gemini-key-input" placeholder="Paste your Gemini API key here…" value="${esc(geminiKey)}"/>
+      <button class="btn btn-primary btn-sm" id="save-key-btn"><i class="ti ti-check"></i> Save</button>
+      <span class="key-saved" id="key-saved-msg"><i class="ti ti-circle-check"></i> Saved!</span>
+    </div>`;
+  setTimeout(()=>{
+    const inp=document.getElementById("gemini-key-input");
+    const btn=document.getElementById("save-key-btn");
+    const msg=document.getElementById("key-saved-msg");
+    if(geminiKey){ msg.style.display="inline-flex"; }
+    btn.onclick=()=>{
+      const k=inp.value.trim();
+      if(!k){alert("Please paste your API key first.");return;}
+      geminiKey=k; localStorage.setItem("gemini_api_key",k);
+      msg.style.display="inline-flex";
+      setTimeout(()=>render(),800);
+    };
+  },0);
+  return div;
+}
+
+/* ── STEP 1: FORM BUILDER ── */
+function buildStep1(){
+  const card=document.createElement("div"); card.className="card";
+  card.innerHTML=`
+    <div class="section-title"><i class="ti ti-layout-list"></i> Build your form</div>
+    <p class="section-desc">Add fields, choose types, mark required. Preview updates live.</p>
+    <div id="fields-list"></div>
+    <div style="display:flex;gap:8px;margin-bottom:1.5rem">
+      <button class="btn btn-sm" id="add-field-btn"><i class="ti ti-plus"></i> Add field</button>
+    </div>
+    <div style="border-top:1px solid #eee;padding-top:1rem">
+      <div style="font-size:13px;font-weight:700;color:#888;margin-bottom:0.75rem"><i class="ti ti-eye"></i> Live preview</div>
+      <div class="preview-box" id="preview-area"></div>
+    </div>
+    <div class="actions-row">
+      <span style="font-size:12px;color:#999">${state.fields.length} field(s)</span>
+      <button class="btn btn-primary" id="next-step2-btn">Next: Upload Document <i class="ti ti-arrow-right"></i></button>
+    </div>`;
+  card.querySelector("#add-field-btn").onclick=addField;
+  card.querySelector("#next-step2-btn").onclick=goToStep2;
+  setTimeout(()=>{ renderFieldsList(); renderLivePreview(); },0);
+  return card;
+}
+
+function renderFieldsList(){
+  const c=document.getElementById("fields-list"); if(!c) return; c.innerHTML="";
+  state.fields.forEach(f=>{
+    const div=document.createElement("div"); div.className="field-card";
+    div.innerHTML=`
+      <div class="field-grid">
+        <div><div class="lbl">Label</div><input id="lbl-${f.id}" value="${esc(f.label)}" placeholder="Field label"/></div>
+        <div><div class="lbl">Type</div><select id="typ-${f.id}">${["text","textarea","number","date","dropdown","checkbox"].map(t=>`<option value="${t}"${f.type===t?" selected":""}>${t}</option>`).join("")}</select></div>
+        <div><div class="lbl">Required</div><label class="toggle-wrap"><input type="checkbox" id="req-${f.id}"${f.required?" checked":""}> Required</label></div>
+        <div style="margin-top:20px"><button class="btn btn-sm btn-danger" data-del="${f.id}"><i class="ti ti-trash"></i></button></div>
+      </div>
+      ${f.type==="dropdown"?buildOptsHTML(f):""}`;
+    div.querySelector(`#lbl-${f.id}`).oninput=e=>fieldChange(f.id,"label",e.target.value);
+    div.querySelector(`#typ-${f.id}`).onchange=e=>fieldChange(f.id,"type",e.target.value);
+    div.querySelector(`#req-${f.id}`).onchange=e=>fieldChange(f.id,"required",e.target.checked);
+    div.querySelector(`[data-del="${f.id}"]`).onclick=()=>removeField(f.id);
+    if(f.type==="dropdown") attachOptsListeners(div,f);
+    c.appendChild(div);
+  });
+}
+
+function buildOptsHTML(f){
+  let h=`<div class="opts-list"><div class="lbl" style="margin-top:10px">Dropdown options</div>`;
+  (f.options||[]).forEach((o,i)=>{ h+=`<div class="opt-row"><input class="opt-inp" data-fid="${f.id}" data-i="${i}" value="${esc(o)}" style="flex:1" placeholder="Option ${i+1}"/><button class="btn btn-sm btn-danger opt-del" data-fid="${f.id}" data-i="${i}"><i class="ti ti-x"></i></button></div>`; });
+  h+=`<button class="btn btn-sm add-opt" data-fid="${f.id}"><i class="ti ti-plus"></i> Add option</button></div>`;
+  return h;
+}
+
+function attachOptsListeners(container,f){
+  container.querySelectorAll(".opt-inp").forEach(el=>el.oninput=e=>updateOpt(f.id,+e.target.dataset.i,e.target.value));
+  container.querySelectorAll(".opt-del").forEach(el=>el.onclick=e=>removeOpt(f.id,+el.dataset.i));
+  const a=container.querySelector(".add-opt"); if(a) a.onclick=()=>addOpt(f.id);
+}
+
+function renderLivePreview(){
+  const c=document.getElementById("preview-area"); if(!c) return;
+  if(!state.fields.length){c.innerHTML=`<p style="font-size:13px;color:#aaa;text-align:center;padding:0.5rem">Add fields above to see preview</p>`;return;}
+  c.innerHTML=state.fields.map(f=>`
+    <div class="form-field-wrap">
+      <div class="form-label">${esc(f.label)}${f.required?` <span class="required-star">*</span>`:""}</div>
+      ${previewCtrl(f)}
+    </div>`).join("");
+}
+
+function previewCtrl(f){
+  if(f.type==="textarea") return `<textarea rows="2" disabled placeholder="Multi-line text…"></textarea>`;
+  if(f.type==="dropdown") return `<select disabled><option>Select…</option>${(f.options||[]).map(o=>`<option>${esc(o)}</option>`).join("")}</select>`;
+  if(f.type==="checkbox") return `<label class="toggle-wrap"><input type="checkbox" disabled> ${esc(f.label)}</label>`;
+  return `<input type="${f.type==="number"?"number":f.type==="date"?"date":"text"}" disabled placeholder="${f.type==="date"?"yyyy-mm-dd":"Text…"}"/>`;
+}
+
+function fieldChange(id,key,val){ state.fields=state.fields.map(f=>f.id===id?{...f,[key]:val}:f); renderFieldsList(); renderLivePreview(); }
+function addField(){ state.fields=[...state.fields,{id:uid(),label:"New Field",type:"text",required:false,options:[]}]; renderFieldsList(); renderLivePreview(); }
+function removeField(id){ state.fields=state.fields.filter(f=>f.id!==id); renderFieldsList(); renderLivePreview(); }
+function addOpt(fid){ state.fields=state.fields.map(f=>f.id===fid?{...f,options:[...(f.options||[]),"Option"]}:f); renderFieldsList(); renderLivePreview(); }
+function removeOpt(fid,i){ state.fields=state.fields.map(f=>{ if(f.id!==fid) return f; const o=[...f.options]; o.splice(i,1); return{...f,options:o}; }); renderFieldsList(); renderLivePreview(); }
+function updateOpt(fid,i,val){ state.fields=state.fields.map(f=>{ if(f.id!==fid) return f; const o=[...f.options]; o[i]=val; return{...f,options:o}; }); renderLivePreview(); }
+
+function goToStep2(){ if(!state.fields.length){alert("Please add at least one field.");return;} setState({step:2}); }
+
+/* ── STEP 2: UPLOAD ── */
+function buildStep2(){
+  const card=document.createElement("div"); card.className="card";
+  card.appendChild(buildApiKeyBox());
+
+  let inner=`
+    <div class="section-title"><i class="ti ti-upload"></i> Upload a document</div>
+    <p class="section-desc">Supported: PDF, PNG, JPG, JPEG. Gemini 2.5 Flash will read and autofill your form.</p>`;
+
+  if(state.uploadedFile){
+    inner+=`
+      <div class="file-preview">
+        <div class="file-icon"><i class="ti ti-file-text"></i></div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">${esc(state.docName)}</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">Ready for AI extraction</div>
+        </div>
+        <span class="badge badge-ok"><i class="ti ti-check"></i> Uploaded</span>
+        <button class="btn btn-sm" id="change-file-btn">Change</button>
+      </div>`;
+  } else {
+    inner+=`
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon"><i class="ti ti-cloud-upload"></i></div>
+        <div class="dropzone-title">Drop file here or click to browse</div>
+        <div class="dropzone-sub">PDF · PNG · JPG · JPEG</div>
+      </div>
+      <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf" style="display:none"/>
+      <div id="upload-err" style="display:none;margin-top:0.75rem" class="error-box"></div>`;
+  }
+
+  inner+=`
+    <div class="actions-row">
+      <button class="btn" id="back-s1"><i class="ti ti-arrow-left"></i> Back</button>
+      <button class="btn btn-primary" id="go-extract-btn" ${!state.uploadedFile?"disabled":""}>Extract with Gemini 2.5 Flash <i class="ti ti-sparkles"></i></button>
+    </div>`;
+
+  const inner_div=document.createElement("div"); inner_div.innerHTML=inner;
+  card.appendChild(inner_div);
+
+  setTimeout(()=>{
+    document.getElementById("back-s1").onclick=()=>goStep(1);
+    document.getElementById("go-extract-btn").onclick=goToStep3;
+    if(state.uploadedFile){
+      document.getElementById("change-file-btn").onclick=()=>setState({uploadedFile:null,docBase64:null,docMimeType:null,docName:null});
+    } else {
+      const dz=document.getElementById("dropzone");
+      const fi=document.getElementById("file-input");
+      dz.onclick=()=>fi.click();
+      dz.ondragover=e=>{e.preventDefault();dz.classList.add("drag");};
+      dz.ondragleave=()=>dz.classList.remove("drag");
+      dz.ondrop=e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);};
+      fi.onchange=e=>{if(e.target.files[0]) processFile(e.target.files[0]);};
+    }
+  },0);
+  return card;
+}
+
+function processFile(file){
+  const allowed=["application/pdf","image/png","image/jpeg"];
+  const errEl=document.getElementById("upload-err");
+  if(!allowed.includes(file.type)){
+    if(errEl){errEl.style.display="block";errEl.innerHTML=`<i class="ti ti-x"></i> Unsupported file: <strong>${esc(file.name)}</strong>. Please upload PDF, PNG, JPG, or JPEG only.`;}
+    return;
+  }
+  const reader=new FileReader();
+  reader.onload=e=>{ const b64=e.target.result.split(",")[1]; setState({uploadedFile:file,docBase64:b64,docMimeType:file.type,docName:file.name}); };
+  reader.readAsDataURL(file);
+}
+
+function goToStep3(){
+  if(!geminiKey){alert("Please save your Gemini API key first.");return;}
+  if(!state.uploadedFile){alert("Please upload a document.");return;}
+  setState({step:3,isExtracting:true,extractError:null});
+  runExtraction();
+}
+
+/* ── STEP 3: EXTRACTION ── */
+function buildStep3(){
+  const card=document.createElement("div"); card.className="card";
+  if(state.isExtracting){
+    card.innerHTML=`
+      <div class="ai-loading">
+        <div class="spinner"></div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:0.5rem">Gemini 2.5 Flash is reading your document…</div>
+        <div style="font-size:13px;color:#888">Extracting values for ${state.fields.length} field(s). This takes a few seconds.</div>
+      </div>`;
+  } else if(state.extractError){
+    card.innerHTML=`
+      <div style="text-align:center;padding:3rem 1rem">
+        <i class="ti ti-alert-circle" style="font-size:40px;color:#D85A30;display:block;margin-bottom:1rem"></i>
+        <div style="font-size:15px;font-weight:700;margin-bottom:0.5rem">Extraction failed</div>
+        <div style="font-size:13px;color:#888;margin-bottom:1.5rem;max-width:400px;margin-left:auto;margin-right:auto">${esc(state.extractError)}</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn" onclick="goStep(2)"><i class="ti ti-arrow-left"></i> Back</button>
+          <button class="btn btn-primary" onclick="retryExtract()"><i class="ti ti-refresh"></i> Retry</button>
+        </div>
+      </div>`;
+  }
+  return card;
+}
+
+async function runExtraction(){
+  if(!geminiKey){
+    setState({isExtracting:false,extractError:"No Gemini API key found. Go back and paste your key."});
+    return;
+  }
+  const schema=state.fields.map(f=>({id:f.id,label:f.label,type:f.type,options:f.options||[]}));
+  const prompt=`You are a precise data extraction assistant.
+
+Given the document and this form schema, extract the best matching value for each field.
+
+Schema:
+${JSON.stringify(schema,null,2)}
+
+Rules:
+- Return ONLY valid JSON — no markdown, no explanation, no backticks
+- Keys = field id, values = extracted string value (or null if not found)  
+- For checkbox: use "true" or "false" as string
+- For dropdown: match one of the provided options exactly
+- Scan the entire document carefully
+- Example: {"f1":"John Doe","f2":"john@email.com","f3":null}`;
+
+  try{
+    const url=`${GEMINI_API_BASE}${GEMINI_MODEL}:generateContent?key=${geminiKey}`;
+    const body={
+      contents:[{
+        parts:[
+          {inline_data:{mime_type:state.docMimeType,data:state.docBase64}},
+          {text:prompt}
+        ]
+      }],
+      generationConfig:{temperature:0,maxOutputTokens:1024}
+    };
+
+    const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data=await resp.json();
+
+    if(data.error) throw new Error(data.error.message||"Gemini API error");
+
+    const raw=data.candidates?.[0]?.content?.parts?.[0]?.text||"";
+    const clean=raw.replace(/```json|```/g,"").trim();
+    const extracted=JSON.parse(clean);
+    setState({isExtracting:false,extractedValues:extracted,formValues:{...extracted},step:4});
+  } catch(err){
+    setState({isExtracting:false,extractError:err.message||"Unknown error during extraction."});
+  }
+}
+
+function retryExtract(){ setState({isExtracting:true,extractError:null}); runExtraction(); }
+
+/* ── STEP 4: REVIEW & SAVE ── */
+function buildStep4(){
+  const wrap=document.createElement("div");
+  const total=state.fields.length;
+  const filled=state.fields.filter(f=>{ const v=state.formValues[f.id]; return v!==null&&v!==undefined&&v!==""; }).length;
+  const missing=total-filled;
+  const pct=total?Math.round((filled/total)*100):0;
+
+  if(state.saved){
+    const card=document.createElement("div"); card.className="card";
+    card.innerHTML=`
+      <div class="saved-banner">
+        <i class="ti ti-circle-check" style="font-size:40px;color:#3B6D11;display:block;margin-bottom:0.75rem"></i>
+        <div style="font-size:17px;font-weight:700;color:#3B6D11;margin-bottom:0.25rem">Form saved successfully!</div>
+        <div style="font-size:13px;color:#639922">${filled} of ${total} fields filled · ${pct}% complete</div>
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:0.5rem">Form output (JSON)</div>
+      <div class="json-box" id="json-out"></div>
+      <div class="actions-row">
+        <button class="btn" onclick="setState({saved:false})"><i class="ti ti-arrow-left"></i> Edit more</button>
+        <div class="actions-right">
+          <button class="btn" id="copy-btn"><i class="ti ti-copy"></i> Copy</button>
+          <button class="btn" id="dl-btn"><i class="ti ti-download"></i> Download</button>
+          <button class="btn btn-primary" onclick="startOver()"><i class="ti ti-refresh"></i> Start over</button>
+        </div>
+      </div>`;
+    wrap.appendChild(card);
+    setTimeout(()=>{
+      const out=buildOutput();
+      const jb=document.getElementById("json-out"); if(jb) jb.textContent=JSON.stringify(out,null,2);
+      document.getElementById("copy-btn").onclick=()=>navigator.clipboard.writeText(JSON.stringify(out,null,2)).then(()=>alert("Copied!"));
+      document.getElementById("dl-btn").onclick=()=>downloadJSON(out);
+    },0);
+    return wrap;
+  }
+
+  const card=document.createElement("div"); card.className="card";
+  card.innerHTML=`
+    <div class="section-title"><i class="ti ti-edit"></i> Review & edit extracted data</div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" style="color:#34A853">${filled}</div><div class="stat-lbl">Filled</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:${missing>0?"#BA7517":"#34A853"}">${missing}</div><div class="stat-lbl">Missing</div></div>
+      <div class="stat-box"><div class="stat-num">${pct}%</div><div class="stat-lbl">Complete</div></div>
+    </div>
+    ${Object.keys(state.validationErrors).length?`<div class="val-error-box"><i class="ti ti-alert-circle"></i> Please fill in all required fields before saving.</div>`:""}
+    <div id="review-fields"></div>
+    <div class="actions-row">
+      <button class="btn" id="back-s2-btn"><i class="ti ti-arrow-left"></i> Back</button>
+      <button class="btn btn-primary" id="save-btn"><i class="ti ti-device-floppy"></i> Save form</button>
+    </div>`;
+  card.querySelector("#back-s2-btn").onclick=()=>goStep(2);
+  card.querySelector("#save-btn").onclick=saveForm;
+  wrap.appendChild(card);
+  setTimeout(renderReviewFields,0);
+  return wrap;
+}
+
+function renderReviewFields(){
+  const c=document.getElementById("review-fields"); if(!c) return; c.innerHTML="";
+  state.fields.forEach(f=>{
+    const val=state.formValues[f.id];
+    const extracted=state.extractedValues[f.id];
+    const isMissing=(extracted===null||extracted===undefined||extracted==="");
+    const errMsg=state.validationErrors[f.id]||null;
+    const div=document.createElement("div"); div.className="form-field-wrap";
+    const labelRow=document.createElement("div"); labelRow.className="form-label";
+    labelRow.innerHTML=`${esc(f.label)}${f.required?` <span class="required-star">*</span>`:""}
+      <span class="badge ${isMissing?"badge-warn":"badge-ok"}">${isMissing?`<i class="ti ti-alert-triangle"></i> Missing`:`<i class="ti ti-check"></i> Extracted`}</span>`;
+    div.appendChild(labelRow);
+    div.appendChild(buildEditControl(f,val,isMissing,errMsg));
+    if(isMissing&&f.type!=="checkbox"){
+      const note=document.createElement("div"); note.className="missing-note";
+      note.innerHTML=`<i class="ti ti-pencil"></i> Not found in document — fill in manually`;
+      div.appendChild(note);
+    }
+    if(errMsg){ const en=document.createElement("div"); en.className="err-note"; en.textContent=errMsg; div.appendChild(en); }
+    c.appendChild(div);
+  });
+}
+
+function buildEditControl(f,val,missing,errMsg){
+  const border=errMsg?"border-color:#E24B4A":missing?"border-color:#EF9F27":"";
+  const bg=missing&&!errMsg?"background:#fef9f0":"";
+  const style=`${border};${bg}`;
+  if(f.type==="textarea"){
+    const ta=document.createElement("textarea"); ta.rows=3; ta.value=val||""; ta.placeholder="Enter value…"; ta.style.cssText=style;
+    ta.oninput=e=>updateFormVal(f.id,e.target.value); return ta;
+  }
+  if(f.type==="dropdown"){
+    const sel=document.createElement("select"); sel.style.cssText=style;
+    const blank=document.createElement("option"); blank.value=""; blank.textContent="Select…"; sel.appendChild(blank);
+    (f.options||[]).forEach(o=>{ const op=document.createElement("option"); op.value=o; op.textContent=o; if(val===o) op.selected=true; sel.appendChild(op); });
+    sel.onchange=e=>updateFormVal(f.id,e.target.value); return sel;
+  }
+  if(f.type==="checkbox"){
+    const lbl=document.createElement("label"); lbl.className="toggle-wrap";
+    const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=(val==="true"||val===true);
+    cb.onchange=e=>updateFormVal(f.id,e.target.checked?"true":"false");
+    lbl.appendChild(cb); lbl.appendChild(document.createTextNode(" "+f.label)); return lbl;
+  }
+  const inp=document.createElement("input");
+  inp.type=f.type==="number"?"number":f.type==="date"?"date":"text";
+  inp.value=val||""; inp.placeholder="Enter value…"; inp.style.cssText=style;
+  inp.oninput=e=>updateFormVal(f.id,e.target.value); return inp;
+}
+
+function updateFormVal(id,val){
+  state.formValues={...state.formValues,[id]:val};
+  if(state.validationErrors[id]&&val){ const e={...state.validationErrors}; delete e[id]; state.validationErrors=e; }
+  renderReviewFields();
+}
+
+function saveForm(){
+  const errs={};
+  state.fields.forEach(f=>{ if(f.required){ const v=state.formValues[f.id]; if(!v||v==="") errs[f.id]="This field is required."; } });
+  if(Object.keys(errs).length){ setState({validationErrors:errs}); return; }
+  downloadJSON(buildOutput());
+  setState({saved:true,validationErrors:{}});
+}
+
+function buildOutput(){
+  return {
+    submittedAt:new Date().toISOString(),
+    sourceDocument:state.docName||"N/A",
+    fields:state.fields.map(f=>({id:f.id,label:f.label,type:f.type,required:f.required,value:state.formValues[f.id]??null}))
+  };
+}
+
+function downloadJSON(data){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="form-output.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function startOver(){
+  setState({step:1,fields:[{id:"f1",label:"Full Name",type:"text",required:true,options:[]},{id:"f2",label:"Email Address",type:"text",required:true,options:[]},{id:"f3",label:"Phone Number",type:"text",required:false,options:[]},{id:"f4",label:"Message",type:"textarea",required:false,options:[]}],uploadedFile:null,docBase64:null,docMimeType:null,docName:null,extractedValues:{},formValues:{},isExtracting:false,extractError:null,saved:false,validationErrors:{}});
+}
+
+function esc(s){ if(!s) return ""; return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+render();
+</script>
+</body>
+</html>
